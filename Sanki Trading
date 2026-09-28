@@ -1,0 +1,127 @@
+from pathlib import Path
+import zipfile, textwrap, json
+
+base = Path("/mnt/data/sanki_trading_blog")
+base.mkdir(exist_ok=True)
+
+html = r'''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Sanki Trading - simple trading education, market concepts, technical analysis and risk management.">
+  <title>Sanki Trading | Learn • Analyze • Trade • Grow</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#"><span class="logo">↗</span><span>Sanki <b>Trading</b><small>Learn&nbsp; | &nbsp;Analyze&nbsp; | &nbsp;Trade&nbsp; | &nbsp;Grow</small></span></a>
+  <nav>
+    <a href="#home">Home</a><a href="#articles">Blog</a><a href="#categories">Categories</a><a href="#tools">Tools</a><a href="#about">About</a>
+  </nav>
+  <button class="theme" onclick="toggleTheme()" aria-label="Toggle theme">☾</button>
+</header>
+
+<main id="home">
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">▣ TRADE SMARTER</span>
+    <h1>Welcome to<br><strong>Sanki Trading</strong></h1>
+    <p>Learn trading concepts from basics to advanced with simple explanations, practical examples and a focus on disciplined risk management.</p>
+    <a class="btn" href="#articles">Explore Articles →</a>
+  </div>
+  <div class="chart-art" aria-hidden="true">
+    <div class="bull">🐂</div>
+    <div class="candles">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+  </div>
+</section>
+
+<section id="articles" class="section">
+  <div class="section-head"><div><h2>▌ Latest Articles</h2><p>Fresh trading lessons and market concepts.</p></div></div>
+  <div class="cards">
+    <article class="card"><div class="thumb candles-img">▂▅▃▇▆▉</div><span class="tag">Market Basics</span><h3>Volume Kya Hota Hai?</h3><p>Trading volume kya hota hai aur price ke saath volume ko kaise read karein.</p><a href="#" onclick="showPost('Volume Kya Hota Hai?');return false">Read article →</a></article>
+    <article class="card"><div class="thumb">FVG</div><span class="tag purple">Technical Analysis</span><h3>FVG Kya Hota Hai?</h3><p>Fair Value Gap ko simple language mein samjhein aur chart par identify karein.</p><a href="#" onclick="showPost('FVG Kya Hota Hai?');return false">Read article →</a></article>
+    <article class="card"><div class="thumb">◫ ◨ ◩</div><span class="tag pink">Candlestick Patterns</span><h3>High Probability Candlesticks</h3><p>Important candlestick patterns aur unka practical use samjhein.</p><a href="#" onclick="showPost('High Probability Candlesticks');return false">Read article →</a></article>
+    <article class="card"><div class="thumb">F&O</div><span class="tag orange">Futures & Options</span><h3>Futures & Options Basics</h3><p>OI, futures, options aur market positioning ke basic concepts.</p><a href="#" onclick="showPost('Futures & Options Basics');return false">Read article →</a></article>
+  </div>
+</section>
+
+<section id="tools" class="section">
+  <div class="section-head"><div><h2>▌ Trading Tools</h2><p>Simple calculators for better planning.</p></div></div>
+  <div class="tool-grid">
+    <div class="tool"><b>▣ Position Size Calculator</b><p>Plan position size from capital and risk.</p><button onclick="calculator('Position Size')">Open Tool →</button></div>
+    <div class="tool"><b>◎ Risk / Reward Calculator</b><p>Check your potential risk-to-reward ratio.</p><button onclick="calculator('Risk / Reward')">Open Tool →</button></div>
+    <div class="tool"><b>▤ Profit / Loss Calculator</b><p>Estimate potential P&L for a trade.</p><button onclick="calculator('Profit / Loss')">Open Tool →</button></div>
+  </div>
+</section>
+
+<section id="categories" class="section">
+  <div class="section-head"><div><h2>▌ Popular Categories</h2><p>Choose a topic and start learning.</p></div></div>
+  <div class="categories">
+    <a href="#">📖 Market Basics</a><a href="#">📈 Technical Analysis</a><a href="#">🕯️ Candlestick Patterns</a>
+    <a href="#">⚙️ Futures & Options</a><a href="#">🧠 Trading Psychology</a><a href="#">🛡️ Risk Management</a>
+  </div>
+</section>
+
+<section id="about" class="about section">
+  <h2>About Sanki Trading</h2>
+  <p>This blog is built to explain trading concepts in straightforward language. Educational content only — not financial advice.</p>
+</section>
+</main>
+
+<footer>
+  <div class="footer-brand">↗ <b>Sanki Trading</b><small>Learn | Analyze | Trade | Grow</small></div>
+  <p>“Better knowledge leads to better decisions, and better decisions lead to consistent profits.”</p>
+  <div class="links"><a href="#home">Home</a><a href="#articles">Blog</a><a href="#tools">Tools</a><a href="#about">About</a></div>
+  <small>© 2026 Sanki Trading. Educational content only.</small>
+</footer>
+
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box"><button class="close" onclick="closeModal()">×</button><div id="modal-content"></div></div></div>
+<script src="script.js"></script>
+</body>
+</html>'''
+
+css = r''':root{--bg:#030a12;--panel:#071522;--panel2:#0b1b2a;--text:#eef6ff;--muted:#91a6ba;--green:#10e88a;--border:#173047;--accent:#0bdc85}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:inherit;text-decoration:none}.topbar{height:70px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 5%;gap:30px;position:sticky;top:0;background:rgba(3,10,18,.94);backdrop-filter:blur(12px);z-index:10}.brand{display:flex;align-items:center;gap:10px;font-size:23px;font-weight:800}.brand b,.footer-brand b,h1 strong{color:var(--green)}.brand small{display:block;font-size:9px;color:var(--muted);letter-spacing:1px}.logo{color:var(--green);font-size:35px}.topbar nav{display:flex;gap:25px;margin-left:auto}.topbar nav a:hover{color:var(--green)}.theme{background:none;border:0;color:white;font-size:22px;cursor:pointer}
+.hero{min-height:510px;padding:70px 5%;display:flex;align-items:center;overflow:hidden;background:radial-gradient(circle at 75% 40%,#073b35 0,#03101a 38%,var(--bg) 65%)}.hero-copy{max-width:620px;z-index:2}.eyebrow{color:var(--green);border:1px solid #0b8053;border-radius:20px;padding:7px 14px;font-weight:700;font-size:12px}.hero h1{font-size:54px;line-height:1.03;margin:24px 0 16px}.hero p{color:var(--muted);font-size:17px;max-width:590px}.btn,.tool button{display:inline-block;background:var(--green);color:#00140b;border:0;border-radius:8px;padding:13px 20px;font-weight:800;margin-top:15px;cursor:pointer}.chart-art{margin-left:auto;width:430px;height:300px;position:relative}.bull{font-size:150px;position:absolute;right:15px;bottom:20px;filter:drop-shadow(0 0 20px #0e9f69)}.candles{position:absolute;inset:40px 30px 35px 0;transform:skewY(-10deg)}.candles i{display:inline-block;width:20px;margin:0 9px;background:var(--green);height:80px;box-shadow:0 0 8px #0c8}.candles i:nth-child(2n){height:130px;background:#ff4055}.candles i:nth-child(3n){height:160px}.section{padding:55px 5%;border-top:1px solid #0b1a27}.section-head h2{margin:0;font-size:25px}.section-head p{margin-top:2px;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:25px}.card,.tool,.categories a,.about{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}.thumb{height:120px;border-radius:7px;background:#020911;border:1px solid #132c40;display:grid;place-items:center;font-size:35px;color:var(--green);font-weight:900;margin-bottom:14px}.tag{display:inline-block;background:#063e2b;color:#5ff5b3;border-radius:14px;padding:3px 9px;font-size:11px}.purple{background:#271d54;color:#c2a8ff}.pink{background:#451a36;color:#ff9fd4}.orange{background:#4b2a08;color:#ffbd55}.card h3{margin:10px 0 5px}.card p,.tool p,.about p{color:var(--muted);font-size:13px}.card a{color:var(--green);font-weight:700}.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:25px}.tool b{font-size:17px}.tool button{font-size:12px;padding:9px 14px}.categories{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:25px}.categories a{font-weight:700;padding:18px}.categories a:hover{border-color:var(--green)}.about{max-width:800px;margin:20px auto 60px}footer{border-top:1px solid var(--border);padding:35px 5%;display:grid;grid-template-columns:1fr 2fr 1fr;gap:20px;align-items:center;color:var(--muted)}.footer-brand{font-size:22px;color:var(--text)}.footer-brand small{display:block;font-size:10px}.links{display:flex;gap:16px;justify-content:flex-end}.modal{display:none;position:fixed;inset:0;background:#000b;z-index:20;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modal-box{background:var(--panel2);border:1px solid var(--border);border-radius:12px;max-width:500px;width:100%;padding:28px;position:relative}.close{position:absolute;right:15px;top:8px;background:none;border:0;color:white;font-size:28px;cursor:pointer}
+@media(max-width:800px){.topbar{height:62px;padding:0 16px}.topbar nav{display:none}.brand{font-size:19px}.logo{font-size:29px}.hero{padding:50px 18px;min-height:auto}.hero h1{font-size:40px}.hero p{font-size:15px}.chart-art{display:none}.section{padding:40px 16px}.cards,.tool-grid{grid-template-columns:1fr}.categories{grid-template-columns:1fr 1fr}footer{grid-template-columns:1fr;padding:30px 16px}.links{justify-content:flex-start}}
+@media(max-width:420px){.categories{grid-template-columns:1fr}}
+body.light{--bg:#f4f8fb;--panel:#fff;--panel2:#fff;--text:#10202e;--muted:#5f7181;--border:#d8e2ea}.light .topbar{background:#fffffff2}.light .theme{color:#10202e}'''
+
+js = r'''function toggleTheme(){document.body.classList.toggle("light");localStorage.setItem("sankiTheme",document.body.classList.contains("light")?"light":"dark")}
+if(localStorage.getItem("sankiTheme")==="light")document.body.classList.add("light");
+function showPost(title){document.getElementById("modal-content").innerHTML=`<h2>${title}</h2><p>This is a demo article page. Replace this text with your own detailed trading article. You can ask AI to write and format each article for this website.</p><p><b>Educational note:</b> Trading involves risk. Always do your own research and use appropriate risk management.</p>`;document.getElementById("modal").classList.add("show")}
+function closeModal(){document.getElementById("modal").classList.remove("show")}
+function calculator(type){let html=`<h2>${type} Calculator</h2>`;if(type==="Position Size")html+=`<label>Capital ₹<input id="a" type="number" value="100000"></label><label>Risk %<input id="b" type="number" value="1"></label><label>Entry ₹<input id="c" type="number" value="100"></label><label>Stop Loss ₹<input id="d" type="number" value="95"></label><button class="btn" onclick="calcPos()">Calculate</button><div id="result"></div>`;else if(type==="Risk / Reward")html+=`<label>Entry ₹<input id="a" type="number" value="100"></label><label>Stop Loss ₹<input id="b" type="number" value="95"></label><label>Target ₹<input id="c" type="number" value="115"></label><button class="btn" onclick="calcRR()">Calculate</button><div id="result"></div>`;else html+=`<p>Simple P&L calculator coming next. You can customize this tool with your broker's charges.</p>`;document.getElementById("modal-content").innerHTML=html;document.getElementById("modal").classList.add("show")}
+function calcPos(){let cap=+a.value,risk=+b.value,entry=+c.value,sl=+d.value;let r=cap*risk/100;let qty=Math.floor(r/Math.abs(entry-sl));result.innerHTML=`<h3>Position size: ${qty} units</h3><p>Approx. maximum planned risk: ₹${r.toFixed(2)}</p>`}
+function calcRR(){let e=+a.value,s=+b.value,t=+c.value;let risk=Math.abs(e-s),reward=Math.abs(t-e);result.innerHTML=`<h3>Risk : Reward = 1 : ${(reward/risk).toFixed(2)}</h3>`}'''
+
+(base/"index.html").write_text(html, encoding="utf-8")
+(base/"style.css").write_text(css, encoding="utf-8")
+(base/"script.js").write_text(js, encoding="utf-8")
+(base/"README.txt").write_text("""SANKI TRADING - FREE BLOG STARTER
+
+Files:
+- index.html = website
+- style.css = design
+- script.js = interactions/calculators
+
+To publish free:
+1. Create a free GitHub account.
+2. Create a new public repository named sanki-trading.
+3. Upload index.html, style.css and script.js.
+4. In Settings > Pages, select Deploy from branch, main, /root.
+5. Your free site will be available at https://YOURUSERNAME.github.io/sanki-trading/
+
+You can edit the name, articles, categories and colors directly in index.html/style.css.
+""", encoding="utf-8")
+
+zip_path = Path("/mnt/data/Sanki_Trading_Blog_Free.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    for f in base.iterdir():
+        z.write(f, f.name)
+
+print(f"Created: {zip_path}")
